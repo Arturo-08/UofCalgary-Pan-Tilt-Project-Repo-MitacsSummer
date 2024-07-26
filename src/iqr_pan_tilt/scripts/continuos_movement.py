@@ -24,7 +24,7 @@ def continuous_movement(yaw, pitch_min, pitch_max, total_time_minutes):
     direction = 1  # 1 for increasing, -1 for decreasing
 
     print(f"Speed Calculated: {speed}°/s, Frecuency: {rate_hz} Hz, Total time per cycle: {total_time_minutes} min.")
-    print(f"{pitch_change_per_update},{total_updates},{interval},{speed}")
+    
     with PanTiltDriver(start_identity=False, end_identity=False) as driver:
         while True:
             driver.set_pose(int(yaw), int(pitch), int(speed))
