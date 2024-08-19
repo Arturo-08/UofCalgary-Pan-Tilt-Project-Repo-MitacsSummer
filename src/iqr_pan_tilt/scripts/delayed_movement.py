@@ -2,30 +2,10 @@ import time
 import datetime as dt
 from iqr_pan_tilt.pan_tilt_driver import PanTiltDriver
 
-def continuous_movement(yaw, pitch_min, pitch_max, total_time_minutes):
-
-    total_pitch_change = abs((pitch_max - pitch_min)) * 2
-    total_time_seconds = 60 * total_time_minutes
-
-    pitch_change_per_update = total_pitch_change / total_time_seconds
-    if pitch_change_per_update < 0.05:
-        pitch_change_per_update = 0.05
-        
-    total_updates = total_pitch_change / pitch_change_per_update
-
-    interval = total_time_seconds / total_updates
-    rate_hz = 1/interval
-
-    speed = pitch_change_per_update / interval
-    if speed < 1 or speed > 30:
-        print(f"Calculated speed {speed} °/s out of range allowed. Setting the speed to nearest value allowed...")
-        speed = max(1, min(speed, 30))  # Setting up within allowed range
+def continuous_movement(yaw, pitch_min, pitch_max, speed, delayTimeMovement):
     
     pitch = pitch_min
-    direction = 1  # 1 for increasing, -1 for decreasing
     current_date = dt.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-
-    print(f"Speed: {speed}°/s, \nFrecuency: {rate_hz} Hz,\nPitch step: {pitch_change_per_update}°, \nTotal steps: {total_updates},\nTotal time per cycle: {total_time_minutes} min.")
     initial_delay_flag = True
     with PanTiltDriver(start_identity=False, end_identity=False) as driver:
         print(f"Start datetime: {current_date}")
@@ -39,15 +19,13 @@ def continuous_movement(yaw, pitch_min, pitch_max, total_time_minutes):
                 driver.set_pose(int(yaw), int(pitch), int(speed))
             
                 print("Current Yaw: {}, Pitch: {}, Speed: {}".format(yaw, pitch, speed))
-            
-                pitch += direction * pitch_change_per_update
 
                 # Reverse direction at limits
-                if pitch >= pitch_max:
-                    direction = -1
-                elif pitch <= pitch_min:
-                    direction = 1
-                time.sleep(interval)
+                if pitch == pitch_max:
+                    pitch = pitch_min
+                elif pitch == pitch_min:
+                    pitch = pitch_max
+                time.sleep(delayTimeMovement)
 
 if __name__ == '__main__':
     try:
@@ -73,11 +51,18 @@ if __name__ == '__main__':
                 break
 
         while True:
-            total_time_cycle = float(input("Input total time of the cycle in minutes: "))
-            if(total_time_cycle < 0 or not total_time_cycle):
-                print("Invalid cycle time. Try again.")
+            delayTimeMovement = float(input("Input delay time in seconds: "))
+            if(delayTimeMovement < 0 or not delayTimeMovement):
+                print("Invalid delay time. Try again.")
             else:
                 break
-        continuous_movement(yaw, pitch_min, pitch_max, total_time_cycle)        
+
+        while True:
+            speed = float(input("Input speed (1°/s min to 30°/s max): "))
+            if(speed < 1 or  speed > 30 or not speed):
+                print("Invalid speed. Try again.")
+            else:
+                break
+        continuous_movement(yaw, pitch_min, pitch_max, speed, delayTimeMovement)        
     except KeyboardInterrupt:
         print("Disrupted by user")

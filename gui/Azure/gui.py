@@ -2,6 +2,8 @@ import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import subprocess
+import datetime as dt
+from PIL import Image, ImageTk
 
 class App(ttk.Frame):
     def __init__(self, parent):
@@ -80,6 +82,7 @@ class App(ttk.Frame):
         yaw = self.yaw_value.get()
         pitch = self.pitch_value.get()
         speed = self.speed_value.get()
+        print(dt.datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
         command = f"""
         #!/bin/bash
         cd ~/ros_python/Pan-Tilt-UofC-Python-Project
@@ -122,6 +125,18 @@ class App(ttk.Frame):
             subprocess.run(command, shell=True, check=True)
         except subprocess.CalledProcessError as e:
             messagebox.showerror("Error", f"An error occurred: {e}")
+
+    def resize_image(self, event):
+        """ Redimensionar la imagen cuando cambia el tamaño del frame """
+        new_width = event.width
+        new_height = event.height
+
+        #Resize the image
+        resized_img = Image.open("IQR_robot.png").resize((new_width, new_height), Image.ANTIALIAS)
+
+        # Actualizar la imagen en img_iqr
+        self.img_iqr = ImageTk.PhotoImage(resized_img)
+        self.img_iqr_view.configure(image=self.img_iqr)
 
     def setup_widgets(self):
         # Frame for Move IQR to
@@ -182,27 +197,60 @@ class App(ttk.Frame):
         self.run_button = ttk.Button(self.script_frame, text="Run", command=self.run_python_script, state="disabled")
         self.run_button.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
 
-        # Frame for Generate Endless Loop
+         # Frame for Generate Endless Loop
         self.loop_frame = ttk.LabelFrame(self, text="Generate Endless Loop", padding=(20, 10))
         self.loop_frame.grid(row=0, column=1, padx=20, pady=10, sticky="nsew")
 
-        self.cycle_time_label = ttk.Label(self.loop_frame, text="Cycle Time (minutes): ")
+        # Sub-Frame for Generate Endless Loop
+        self.loop_sub_frame = ttk.Frame(self.loop_frame, padding=(20, 10))
+        self.loop_sub_frame.grid(row=0, column=0, padx=20, pady=10, sticky="nsew")
+        self.loop_sub_frame.columnconfigure(0, weight=1)
+        self.loop_sub_frame.columnconfigure(1, weight=1)
+        self.loop_sub_frame.rowconfigure(0, weight=1)
+        self.loop_sub_frame.rowconfigure(1, weight=1)
+
+        # Left Sub-Frame (2 rows, 1 column)
+        self.left_sub_frame = ttk.Frame(self.loop_sub_frame)
+        self.left_sub_frame.grid(row=0, column=0, rowspan=2, padx=10, pady=10, sticky="nsew")
+        self.left_sub_frame.columnconfigure(0, weight=1)
+        self.left_sub_frame.rowconfigure(0, weight=1)
+        self.left_sub_frame.rowconfigure(1, weight=1)
+
+        # Right Sub-Frame (1 row, 1 column) for Image
+        self.right_sub_frame = ttk.Frame(self.loop_sub_frame)
+        self.right_sub_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        self.right_sub_frame.columnconfigure(0, weight=1)
+        self.right_sub_frame.rowconfigure(0, weight=1)
+
+        # Load image for the right frame
+        img_path = os.path.join(os.path.dirname(__file__), "IQR_robot.png")
+        img = Image.open(img_path)
+        img = img.resize((int(img.width/1.8), int(img.height/1.8)))
+
+        self.img_iqr = ImageTk.PhotoImage(img)
+        self.img_iqr_view = ttk.Label(self.right_sub_frame, image=self.img_iqr)
+        self.img_iqr_view.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+
+        # Setting up size photo
+        self.right_sub_frame.bind("<Configure>", self.resize_image)
+
+        self.cycle_time_label = ttk.Label(self.left_sub_frame, text="Cycle Time (minutes): ")
         self.cycle_time_label.grid(row=0, column=0, padx=5, pady=5, sticky="e")
-        self.cycle_time_entry = ttk.Entry(self.loop_frame, textvariable=self.cycle_time_value)
+        self.cycle_time_entry = ttk.Entry(self.left_sub_frame, textvariable=self.cycle_time_value)
         self.cycle_time_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
-        self.min_pitch_label = ttk.Label(self.loop_frame, text="Pitch Min: ")
+        self.min_pitch_label = ttk.Label(self.left_sub_frame, text="Pitch Min: ")
         self.min_pitch_label.grid(row=1, column=0, padx=5, pady=5, sticky="e")
-        self.min_pitch_entry = ttk.Entry(self.loop_frame, textvariable=self.min_pitch_value)
+        self.min_pitch_entry = ttk.Entry(self.left_sub_frame, textvariable=self.min_pitch_value)
         self.min_pitch_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
-        self.max_pitch_label = ttk.Label(self.loop_frame, text="Pitch Max: ")
+        self.max_pitch_label = ttk.Label(self.left_sub_frame, text="Pitch Max: ")
         self.max_pitch_label.grid(row=2, column=0, padx=5, pady=5, sticky="e")
-        self.max_pitch_entry = ttk.Entry(self.loop_frame, textvariable=self.max_pitch_value)
+        self.max_pitch_entry = ttk.Entry(self.left_sub_frame, textvariable=self.max_pitch_value)
         self.max_pitch_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
 
         self.generate_button = ttk.Button(self.loop_frame, text="Generate endless loop", command=self.generate_endless_loop)
-        self.generate_button.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+        self.generate_button.grid(row=3, column=0, padx=5, pady=5, sticky="ew")
 
         # Frame for Last Values
         self.last_values_frame = ttk.LabelFrame(self, text="Last Values", padding=(20, 10))
