@@ -125,19 +125,7 @@ class App(ttk.Frame):
             subprocess.run(command, shell=True, check=True)
         except subprocess.CalledProcessError as e:
             messagebox.showerror("Error", f"An error occurred: {e}")
-
-    def resize_image(self, event):
-        """ Redimensionar la imagen cuando cambia el tamaño del frame """
-        new_width = event.width
-        new_height = event.height
-
-        #Resize the image
-        resized_img = Image.open("IQR_robot.png").resize((new_width, new_height), Image.ANTIALIAS)
-
-        # Actualizar la imagen en img_iqr
-        self.img_iqr = ImageTk.PhotoImage(resized_img)
-        self.img_iqr_view.configure(image=self.img_iqr)
-
+            
     def setup_widgets(self):
         # Frame for Move IQR to
         self.move_iqr_frame = ttk.LabelFrame(self, text="Move IQR to:", padding=(20, 10))
@@ -230,9 +218,6 @@ class App(ttk.Frame):
         self.img_iqr = ImageTk.PhotoImage(img)
         self.img_iqr_view = ttk.Label(self.right_sub_frame, image=self.img_iqr)
         self.img_iqr_view.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
-
-        # Setting up size photo
-        self.right_sub_frame.bind("<Configure>", self.resize_image)
 
         self.cycle_time_label = ttk.Label(self.left_sub_frame, text="Cycle Time (minutes): ")
         self.cycle_time_label.grid(row=0, column=0, padx=5, pady=5, sticky="e")
